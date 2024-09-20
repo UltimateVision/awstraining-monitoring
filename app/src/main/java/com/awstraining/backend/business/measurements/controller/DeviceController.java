@@ -34,7 +34,7 @@ class DeviceController implements DeviceIdApi {
 
     @Override
     public ResponseEntity<Measurement> publishMeasurements(final String deviceId, final Measurement measurement) {
-        count();
+        count("publishMeasurements");
 
         LOGGER.info("Publishing measurement for device '{}'", deviceId);
         final MeasurementDO measurementDO = fromMeasurement(deviceId, measurement);
@@ -43,7 +43,7 @@ class DeviceController implements DeviceIdApi {
     }
     @Override
     public ResponseEntity<Measurements> retrieveMeasurements(final String deviceId) {
-        count();
+        count("retrieveMeasurements");
 
         LOGGER.info("Retrieving all measurements for device '{}'", deviceId);
         final List<Measurement> measurements = service.getMeasurements()
@@ -57,8 +57,7 @@ class DeviceController implements DeviceIdApi {
         return ResponseEntity.ok(measurementsResult);
     }
 
-    private void count() {
-        String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
+    private void count(String methodName) {
         meterRegistry.counter(methodName, "method", "invocation").increment();
     }
 
