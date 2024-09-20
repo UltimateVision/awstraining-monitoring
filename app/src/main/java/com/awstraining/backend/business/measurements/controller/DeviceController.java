@@ -59,8 +59,7 @@ class DeviceController implements DeviceIdApi {
 
     private void count() {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
-        Counter counter = Counter.builder("demo.counter").tag("method", methodName).register(meterRegistry);
-        counter.increment();
+        meterRegistry.counter(methodName, "method", "invocation").increment();
     }
 
     private Measurement toMeasurement(final MeasurementDO measurementDO) {
