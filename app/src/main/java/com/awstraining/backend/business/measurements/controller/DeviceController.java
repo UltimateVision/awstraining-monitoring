@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 
 @RestController
 @RequestMapping("device/v1")
@@ -22,14 +24,18 @@ class DeviceController implements DeviceIdApi {
     private static final Logger LOGGER = LogManager.getLogger(DeviceController.class);
 
     private final MeasurementService service;
+    private final MeterRegistry meterRegistry;
 
     @Autowired
-    public DeviceController(final MeasurementService service) {
+    public DeviceController(final MeasurementService service, final MeterRegistry meterRegistry) {
         this.service = service;
+        this.meterRegistry = meterRegistry;
     }
 
     @Override
     public ResponseEntity<Measurement> publishMeasurements(final String deviceId, final Measurement measurement) {
+        count();
+
         LOGGER.info("Publishing measurement for device '{}'", deviceId);
         final MeasurementDO measurementDO = fromMeasurement(deviceId, measurement);
         service.saveMeasurement(measurementDO);
@@ -37,6 +43,8 @@ class DeviceController implements DeviceIdApi {
     }
     @Override
     public ResponseEntity<Measurements> retrieveMeasurements(final String deviceId) {
+        count();
+
         LOGGER.info("Retrieving all measurements for device '{}'", deviceId);
         final List<Measurement> measurements = service.getMeasurements()
                 .stream()
@@ -47,6 +55,12 @@ class DeviceController implements DeviceIdApi {
         LOGGER.info("Returning measurements {}", measurements);
         LOGGER.info("Size: {}", measurements.size());
         return ResponseEntity.ok(measurementsResult);
+    }
+
+    private void count() {
+        String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
+        Counter counter = Counter.builder("demo.counter").tag("method", methodName).register(meterRegistry);
+        counter.increment();
     }
 
     private Measurement toMeasurement(final MeasurementDO measurementDO) {
